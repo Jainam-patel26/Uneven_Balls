@@ -1,0 +1,186 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define M 3 // Order of the B-tree
+
+struct BTreeNode {
+    int leaf; // 1 if leaf, 0 if internal node
+    int n;    // Number of keys in the node
+    int keys[M - 1];
+    struct BTreeNode* child[M];
+};
+
+struct BTree {
+    struct BTreeNode* root;
+};
+
+// Function to create a new B-tree node
+struct BTreeNode* createNode() {
+    struct BTreeNode* newNode = (struct BTreeNode*)malloc(sizeof(struct BTreeNode));
+    if (newNode != NULL) {
+        newNode->leaf = 1;
+        newNode->n = 0;
+        for (int i = 0; i < M - 1; ++i) {
+            newNode->keys[i] = 0;
+            newNode->child[i] = NULL;
+        }
+        newNode->child[M - 1] = NULL;
+    }
+    return newNode;
+}
+
+// Function to split a child node
+void splitChild(struct BTreeNode* x, int i) {
+    struct BTreeNode* y = x->child[i];
+    struct BTreeNode* z = createNode();
+
+    x->child[i] = y;
+    x->child[i + 1] = z;
+
+    z->leaf = y->leaf;
+    z->n = (M - 1) / 2;
+
+    for (int j = 0; j < z->n; ++j) {
+        z->keys[j] = y->keys[j + (M + 1) / 2];
+    }
+
+    if (!y->leaf) {
+        for (int j = 0; j <= z->n; ++j) {
+            z->child[j] = y->child[j + (M + 1) / 2];
+        }
+    }
+
+    y->n = (M - 1) / 2;
+
+    for (int j = x->n; j > i; --j) {
+        x->keys[j] = x->keys[j - 1];
+        x->child[j + 1] = x->child[j];
+    }
+
+    x->keys[i] = y->keys[(M - 1) / 2];
+    x->child[i + 1] = z;
+    x->n++;
+}
+
+// Function to insert a key into a B-tree
+void insertBTree(struct BTree* tree, int key) {
+    struct BTreeNode* r = tree->root;
+    if (r == NULL) {
+        // If the tree is empty, create a new root
+        tree->root = createNode();
+        tree->root->keys[0] = key;
+        tree->root->n = 1;
+    } else {
+        if (r->n == M - 1) {
+            // If the root is full, split it
+            struct BTreeNode* s = createNode();
+            tree->root = s;
+            s->leaf = 0;
+            s->child[0] = r;
+            splitChild(s, 0);
+            insertNonFull(s, key);
+        } else {
+            insertNonFull(r, key);
+        }
+    }
+}
+
+// Function to insert into a non-full B-tree node
+void insertNonFull(struct BTreeNode* x, int key) {
+    int i = x->n - 1;
+    if (x->leaf) {
+        // If x is a leaf, insert the key into it
+        while (i >= 0 && key < x->keys[i]) {
+            x->keys[i + 1] = x->keys[i];
+            i--;
+        }
+        x->keys[i + 1] = key;
+        x->n++;
+    } else {
+        // If x is an internal node
+        while (i >= 0 && key < x->keys[i]) {
+            i--;
+        }
+        i++;
+        if (x->child[i]->n == M - 1) {
+            // If the child is full, split it
+            splitChild(x, i);
+            if (key > x->keys[i]) {
+                i++;
+            }
+        }
+        insertNonFull(x->child[i], key);
+    }
+}
+
+// Function to display the B-tree in-order
+void inOrderTraversal(struct BTreeNode* root) {
+    if (root != NULL) {
+        for (int i = 0; i < root->n; ++i) {
+            inOrderTraversal(root->child[i]);
+            printf("%d ", root->keys[i]);
+        }
+        inOrderTraversal(root->child[root->n]);
+    }
+}
+
+// Function to display the B-tree
+void displayBTree(struct BTree* tree) {
+    if (tree->root != NULL) {
+        inOrderTraversal(tree->root);
+        printf("\n");
+    } else {
+        printf("Tree is empty.\n");
+    }
+}
+
+// Function to free the memory of the B-tree nodes
+void freeBTree(struct BTreeNode* node) {
+    if (node != NULL) {
+        for (int i = 0; i <= node->n; ++i) {
+            freeBTree(node->child[i]);
+        }
+        free(node);
+    }
+}
+
+// Example usage
+int main() {
+    struct BTree* tree = (struct BTree*)malloc(sizeof(struct BTree));
+    tree->root = NULL;
+
+    int choice, key;
+
+    do {
+        printf("\nMenu:\n");
+        printf("1. Insert\n");
+        printf("2. Display B-tree\n");
+        printf("3. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                printf("Enter the key to insert: ");
+                scanf("%d", &key);
+                insertBTree(tree, key);
+                printf("Key %d inserted.\n", key);
+                break;
+            case 2:
+                printf("B-tree: ");
+                displayBTree(tree);
+                break;
+            case 3:
+                printf("Exiting...\n");
+                break;
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    } while (choice != 3);
+
+    // Free the memory
+    freeBTree(tree->root);
+    free(tree);
+
+    return 0;
+}

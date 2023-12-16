@@ -1,0 +1,383 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define colors for Red-Black Tree nodes
+#define RED 0
+#define BLACK 1
+
+// Structure to represent a node in a Red-Black Tree
+struct RBNode {
+    int key;
+    int color;
+    struct RBNode* parent;
+    struct RBNode* left;
+    struct RBNode* right;
+};
+
+// Structure to represent a Red-Black Tree
+struct RBTree {
+    struct RBNode* root;
+};
+
+// Function to create a new Red-Black Tree node
+struct RBNode* createNode(int key) {
+    struct RBNode* newNode = (struct RBNode*)malloc(sizeof(struct RBNode));
+    if (newNode != NULL) {
+        newNode->key = key;
+        newNode->color = RED; // New nodes are initially red
+        newNode->parent = NULL;
+        newNode->left = NULL;
+        newNode->right = NULL;
+    }
+    return newNode;
+}
+
+// Function to left rotate a Red-Black Tree
+void leftRotate(struct RBTree* tree, struct RBNode* x) {
+    struct RBNode* y = x->right;
+    x->right = y->left;
+
+    if (y->left != NULL) {
+        y->left->parent = x;
+    }
+
+    y->parent = x->parent;
+
+    if (x->parent == NULL) {
+        tree->root = y;
+    } else if (x == x->parent->left) {
+        x->parent->left = y;
+    } else {
+        x->parent->right = y;
+    }
+
+    y->left = x;
+    x->parent = y;
+}
+
+// Function to right rotate a Red-Black Tree
+void rightRotate(struct RBTree* tree, struct RBNode* y) {
+    struct RBNode* x = y->left;
+    y->left = x->right;
+
+    if (x->right != NULL) {
+        x->right->parent = y;
+    }
+
+    x->parent = y->parent;
+
+    if (y->parent == NULL) {
+        tree->root = x;
+    } else if (y == y->parent->left) {
+        y->parent->left = x;
+    } else {
+        y->parent->right = x;
+    }
+
+    x->right = y;
+    y->parent = x;
+}
+
+// Function to fix violations after inserting a node into a Red-Black Tree
+void fixInsert(struct RBTree* tree, struct RBNode* z) {
+    while (z->parent != NULL && z->parent->color == RED) {
+        if (z->parent == z->parent->parent->left) {
+            struct RBNode* y = z->parent->parent->right;
+            if (y != NULL && y->color == RED) {
+                z->parent->color = BLACK;
+                y->color = BLACK;
+                z->parent->parent->color = RED;
+                z = z->parent->parent;
+            } else {
+                if (z == z->parent->right) {
+                    z = z->parent;
+                    leftRotate(tree, z);
+                }
+                z->parent->color = BLACK;
+                z->parent->parent->color = RED;
+                rightRotate(tree, z->parent->parent);
+            }
+        } else {
+            struct RBNode* y = z->parent->parent->left;
+            if (y != NULL && y->color == RED) {
+                z->parent->color = BLACK;
+                y->color = BLACK;
+                z->parent->parent->color = RED;
+                z = z->parent->parent;
+            } else {
+                if (z == z->parent->left) {
+                    z = z->parent;
+                    rightRotate(tree, z);
+                }
+                z->parent->color = BLACK;
+                z->parent->parent->color = RED;
+                leftRotate(tree, z->parent->parent);
+            }
+        }
+    }
+    tree->root->color = BLACK; // Ensure the root is black
+}
+
+// Function to insert a key into a Red-Black Tree
+void insert(struct RBTree* tree, int key) {
+    struct RBNode* z = createNode(key);
+    struct RBNode* y = NULL;
+    struct RBNode* x = tree->root;
+
+    while (x != NULL) {
+        y = x;
+        if (z->key < x->key) {
+            x = x->left;
+        } else {
+            x = x->right;
+        }
+    }
+
+    z->parent = y;
+
+    if (y == NULL) {
+        tree->root = z; // Tree is empty, z becomes the root
+    } else if (z->key < y->key) {
+        y->left = z;
+    } else {
+        y->right = z;
+    }
+
+    fixInsert(tree, z);
+}
+
+// Function to display the Red-Black Tree (in-order traversal)
+void inOrderTraversal(struct RBNode* root) {
+    if (root != NULL) {
+        inOrderTraversal(root->left);
+        printf("%d ", root->key);
+        inOrderTraversal(root->right);
+    }
+}
+
+// Function to display the Red-Black Tree
+void displayRBTree(struct RBTree* tree) {
+    if (tree->root != NULL) {
+        inOrderTraversal(tree->root);
+        printf("\n");
+    } else {
+        printf("Tree is empty.\n");
+    }
+}
+
+// Example usage
+int main() {
+    struct RBTree* tree = (struct RBTree*)malloc(sizeof(struct RBTree));
+    tree->root = NULL;
+
+    insert(tree, 10);
+    insert(tree, 20);
+    insert(tree, 15);
+    insert(tree, 5);
+    insert(tree, 25);
+
+    printf("Red-Black Tree: ");
+    displayRBTree(tree);
+
+    free(tree);
+
+    return 0;
+}
+
+
+
+user input menu driven :
+#include <stdio.h>
+#include <stdlib.h>
+
+#define RED 0
+#define BLACK 1
+
+struct RBNode {
+    int key;
+    int color;
+    struct RBNode* parent;
+    struct RBNode* left;
+    struct RBNode* right;
+};
+
+struct RBTree {
+    struct RBNode* root;
+};
+
+struct RBNode* createNode(int key) {
+    struct RBNode* newNode = (struct RBNode*)malloc(sizeof(struct RBNode));
+    if (newNode != NULL) {
+        newNode->key = key;
+        newNode->color = RED;
+        newNode->parent = NULL;
+        newNode->left = NULL;
+        newNode->right = NULL;
+    }
+    return newNode;
+}
+
+void leftRotate(struct RBTree* tree, struct RBNode* x) {
+    struct RBNode* y = x->right;
+    x->right = y->left;
+
+    if (y->left != NULL) {
+        y->left->parent = x;
+    }
+
+    y->parent = x->parent;
+
+    if (x->parent == NULL) {
+        tree->root = y;
+    } else if (x == x->parent->left) {
+        x->parent->left = y;
+    } else {
+        x->parent->right = y;
+    }
+
+    y->left = x;
+    x->parent = y;
+}
+
+void rightRotate(struct RBTree* tree, struct RBNode* y) {
+    struct RBNode* x = y->left;
+    y->left = x->right;
+
+    if (x->right != NULL) {
+        x->right->parent = y;
+    }
+
+    x->parent = y->parent;
+
+    if (y->parent == NULL) {
+        tree->root = x;
+    } else if (y == y->parent->left) {
+        y->parent->left = x;
+    } else {
+        y->parent->right = x;
+    }
+
+    x->right = y;
+    y->parent = x;
+}
+
+void fixInsert(struct RBTree* tree, struct RBNode* z) {
+    while (z->parent != NULL && z->parent->color == RED) {
+        if (z->parent == z->parent->parent->left) {
+            struct RBNode* y = z->parent->parent->right;
+            if (y != NULL && y->color == RED) {
+                z->parent->color = BLACK;
+                y->color = BLACK;
+                z->parent->parent->color = RED;
+                z = z->parent->parent;
+            } else {
+                if (z == z->parent->right) {
+                    z = z->parent;
+                    leftRotate(tree, z);
+                }
+                z->parent->color = BLACK;
+                z->parent->parent->color = RED;
+                rightRotate(tree, z->parent->parent);
+            }
+        } else {
+            struct RBNode* y = z->parent->parent->left;
+            if (y != NULL && y->color == RED) {
+                z->parent->color = BLACK;
+                y->color = BLACK;
+                z->parent->parent->color = RED;
+                z = z->parent->parent;
+            } else {
+                if (z == z->parent->left) {
+                    z = z->parent;
+                    rightRotate(tree, z);
+                }
+                z->parent->color = BLACK;
+                z->parent->parent->color = RED;
+                leftRotate(tree, z->parent->parent);
+            }
+        }
+    }
+    tree->root->color = BLACK;
+}
+
+void insert(struct RBTree* tree, int key) {
+    struct RBNode* z = createNode(key);
+    struct RBNode* y = NULL;
+    struct RBNode* x = tree->root;
+
+    while (x != NULL) {
+        y = x;
+        if (z->key < x->key) {
+            x = x->left;
+        } else {
+            x = x->right;
+        }
+    }
+
+    z->parent = y;
+
+    if (y == NULL) {
+        tree->root = z;
+    } else if (z->key < y->key) {
+        y->left = z;
+    } else {
+        y->right = z;
+    }
+
+    fixInsert(tree, z);
+}
+
+void inOrderTraversal(struct RBNode* root) {
+    if (root != NULL) {
+        inOrderTraversal(root->left);
+        printf("%d ", root->key);
+        inOrderTraversal(root->right);
+    }
+}
+
+void displayRBTree(struct RBTree* tree) {
+    if (tree->root != NULL) {
+        inOrderTraversal(tree->root);
+        printf("\n");
+    } else {
+        printf("Tree is empty.\n");
+    }
+}
+
+int main() {
+    struct RBTree* tree = (struct RBTree*)malloc(sizeof(struct RBTree));
+    tree->root = NULL;
+
+    int choice, key;
+
+    do {
+        printf("\nMenu:\n");
+        printf("1. Insert\n");
+        printf("2. Display Red-Black Tree\n");
+        printf("3. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                printf("Enter the key to insert: ");
+                scanf("%d", &key);
+                insert(tree, key);
+                printf("Key %d inserted.\n", key);
+                break;
+            case 2:
+                printf("Red-Black Tree: ");
+                displayRBTree(tree);
+                break;
+            case 3:
+                printf("Exiting...\n");
+                break;
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    } while (choice != 3);
+
+    free(tree);
+
+    return 0;
+}

@@ -1,0 +1,192 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+// Structure to represent a node in a Fibonacci heap
+struct FibonacciNode {
+    int key;
+    int degree;
+    int marked;
+    struct FibonacciNode* parent;
+    struct FibonacciNode* child;
+    struct FibonacciNode* left;
+    struct FibonacciNode* right;
+};
+
+// Structure to represent a Fibonacci heap
+struct FibonacciHeap {
+    struct FibonacciNode* minNode;
+    int numNodes;
+};
+
+// Function to create a new Fibonacci heap
+struct FibonacciHeap* createFibonacciHeap() {
+    struct FibonacciHeap* heap = (struct FibonacciHeap*)malloc(sizeof(struct FibonacciHeap));
+    if (heap != NULL) {
+        heap->minNode = NULL;
+        heap->numNodes = 0;
+    }
+    return heap;
+}
+
+// Function to create a new Fibonacci node
+struct FibonacciNode* createFibonacciNode(int key) {
+    struct FibonacciNode* newNode = (struct FibonacciNode*)malloc(sizeof(struct FibonacciNode));
+    if (newNode != NULL) {
+        newNode->key = key;
+        newNode->degree = 0;
+        newNode->marked = 0;
+        newNode->parent = NULL;
+        newNode->child = NULL;
+        newNode->left = newNode;
+        newNode->right = newNode;
+    }
+    return newNode;
+}
+
+// Function to link two Fibonacci trees of the same degree
+void link(struct FibonacciNode* y, struct FibonacciNode* x) {
+    y->left->right = y->right;
+    y->right->left = y->left;
+
+    y->parent = x;
+    if (x->child == NULL) {
+        x->child = y;
+        y->left = y;
+        y->right = y;
+    } else {
+        y->left = x->child;
+        y->right = x->child->right;
+        x->child->right->left = y;
+        x->child->right = y;
+    }
+
+    x->degree++;
+    y->marked = 0;
+}
+
+// Function to consolidate the root list of a Fibonacci heap
+void consolidate(struct FibonacciHeap* heap) {
+    int maxDegree = 32; // Assuming a 32-bit integer
+
+    struct FibonacciNode* array[maxDegree];
+    for (int i = 0; i < maxDegree; i++) {
+        array[i] = NULL;
+    }
+
+    struct FibonacciNode* current = heap->minNode;
+    struct FibonacciNode* rootList = heap->minNode;
+    do {
+        struct FibonacciNode* x = current;
+        int d = x->degree;
+
+        while (array[d] != NULL) {
+            struct FibonacciNode* y = array[d];
+            if (x->key > y->key) {
+                struct FibonacciNode* temp = x;
+                x = y;
+                y = temp;
+            }
+            link(y, x);
+            array[d] = NULL;
+            d++;
+        }
+        array[d] = x;
+
+        current = current->right;
+    } while (current != rootList);
+
+    heap->minNode = NULL;
+    for (int i = 0; i < maxDegree; i++) {
+        if (array[i] != NULL) {
+            if (heap->minNode == NULL) {
+                heap->minNode = array[i];
+            } else {
+                if (array[i]->key < heap->minNode->key) {
+                    heap->minNode = array[i];
+                }
+            }
+        }
+    }
+}
+
+// Function to merge two Fibonacci heaps
+struct FibonacciHeap* mergeFibonacciHeaps(struct FibonacciHeap* heap1, struct FibonacciHeap* heap2) {
+    struct FibonacciHeap* resultHeap = createFibonacciHeap();
+
+    if (heap1->minNode == NULL && heap2->minNode == NULL) {
+        // Both heaps are empty
+        return resultHeap;
+    } else if (heap1->minNode == NULL) {
+        // Heap 1 is empty
+        resultHeap->minNode = heap2->minNode;
+        resultHeap->numNodes = heap2->numNodes;
+    } else if (heap2->minNode == NULL) {
+        // Heap 2 is empty
+        resultHeap->minNode = heap1->minNode;
+        resultHeap->numNodes = heap1->numNodes;
+    } else {
+        // Both heaps are non-empty
+        resultHeap->minNode = heap1->minNode;
+
+        // Concatenate the root lists of both heaps
+        struct FibonacciNode* temp = heap1->minNode->right;
+        heap1->minNode->right = heap2->minNode->right;
+        heap2->minNode->right->left = heap1->minNode;
+        heap2->minNode->right = temp;
+        temp->left = heap2->minNode;
+
+        // Update the minimum node if necessary
+        if (heap2->minNode->key < resultHeap->minNode->key) {
+            resultHeap->minNode = heap2->minNode;
+        }
+
+        resultHeap->numNodes = heap1->numNodes + heap2->numNodes;
+    }
+
+    return resultHeap;
+}
+
+// Function to display the Fibonacci heap
+void displayFibonacciHeap(struct FibonacciNode* node) {
+    if (node == NULL) {
+        return;
+    }
+
+    struct FibonacciNode* current = node;
+    do {
+        printf("%d ", current->key);
+        displayFibonacciHeap(current->child);
+        current = current->right;
+    } while (current != node);
+}
+
+// Example usage
+int main() {
+    struct FibonacciHeap* heap1 = createFibonacciHeap();
+    struct FibonacciHeap* heap2 = createFibonacciHeap();
+
+    // Insert nodes into heap1
+    heap1->minNode = createFibonacciNode(1);
+    heap1->numNodes = 1;
+
+    // Insert nodes into heap2
+    heap2->minNode = createFibonacciNode(3);
+    heap2->numNodes = 1;
+
+    printf("Heap 1: ");
+    displayFibonacciHeap(heap1->minNode);
+    printf("\n");
+
+    printf("Heap 2: ");
+    displayFibonacciHeap(heap2->minNode);
+    printf("\n");
+
+    struct FibonacciHeap* mergedHeap = mergeFibonacciHeaps(heap1, heap2);
+
+    printf("Merged Heap: ");
+    displayFibonacciHeap(mergedHeap->minNode);
+    printf("\n");
+
+    return 0;
+}

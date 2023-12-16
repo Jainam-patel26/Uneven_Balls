@@ -1,0 +1,137 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Structure to represent an interval
+struct Interval {
+    int low;
+    int high;
+};
+
+// Structure to represent a node in the interval tree
+struct IntervalNode {
+    struct Interval* interval;
+    int max; // Maximum endpoint in the subtree rooted at this node
+    struct IntervalNode* left;
+    struct IntervalNode* right;
+};
+
+// Function to create a new interval
+struct Interval* createInterval(int low, int high) {
+    struct Interval* newInterval = (struct Interval*)malloc(sizeof(struct Interval));
+    if (newInterval != NULL) {
+        newInterval->low = low;
+        newInterval->high = high;
+    }
+    return newInterval;
+}
+
+// Function to create a new interval tree node
+struct IntervalNode* createIntervalNode(struct Interval* interval) {
+    struct IntervalNode* newNode = (struct IntervalNode*)malloc(sizeof(struct IntervalNode));
+    if (newNode != NULL) {
+        newNode->interval = interval;
+        newNode->max = interval->high;
+        newNode->left = NULL;
+        newNode->right = NULL;
+    }
+    return newNode;
+}
+
+// Function to insert an interval into the interval tree
+struct IntervalNode* insertInterval(struct IntervalNode* root, struct Interval* interval) {
+    if (root == NULL) {
+        return createIntervalNode(interval);
+    }
+
+    int low = root->interval->low;
+
+    if (interval->low < low) {
+        root->left = insertInterval(root->left, interval);
+    } else {
+        root->right = insertInterval(root->right, interval);
+    }
+
+    if (root->max < interval->high) {
+        root->max = interval->high;
+    }
+
+    return root;
+}
+
+// Function to check if two intervals overlap
+int doOverlap(struct Interval* a, struct Interval* b) {
+    return (a->low <= b->high && b->low <= a->high);
+}
+
+// Function to search for overlapping intervals in the interval tree
+void searchOverlap(struct IntervalNode* root, struct Interval* interval) {
+    if (root == NULL) {
+        return;
+    }
+
+    if (doOverlap(root->interval, interval)) {
+        printf("Overlap found: [%d, %d] overlaps with [%d, %d]\n",
+               root->interval->low, root->interval->high,
+               interval->low, interval->high);
+    }
+
+    // Check if the left subtree needs to be searched
+    if (root->left != NULL && root->left->max >= interval->low) {
+        searchOverlap(root->left, interval);
+    }
+
+    // Check if the right subtree needs to be searched
+    if (root->right != NULL && root->right->max >= interval->low) {
+        searchOverlap(root->right, interval);
+    }
+}
+
+// Function to hardcode an example interval tree
+struct IntervalNode* hardcodedIntervalTree() {
+    struct IntervalNode* root = NULL;
+
+    root = insertInterval(root, createInterval(15, 20));
+    root = insertInterval(root, createInterval(10, 30));
+    root = insertInterval(root, createInterval(5, 20));
+    root = insertInterval(root, createInterval(12, 15));
+    root = insertInterval(root, createInterval(17, 19));
+    root = insertInterval(root, createInterval(30, 40));
+
+    return root;
+}
+
+// Function to display in-order traversal of the interval tree
+void inOrderTraversal(struct IntervalNode* root) {
+    if (root != NULL) {
+        inOrderTraversal(root->left);
+        printf("[%d, %d] ", root->interval->low, root->interval->high);
+        inOrderTraversal(root->right);
+    }
+}
+
+// Function to free memory allocated for the interval tree
+void freeIntervalTree(struct IntervalNode* root) {
+    if (root != NULL) {
+        freeIntervalTree(root->left);
+        freeIntervalTree(root->right);
+        free(root->interval);
+        free(root);
+    }
+}
+
+int main() {
+    struct IntervalNode* root = hardcodedIntervalTree();
+
+    printf("Interval Tree (In-order traversal): ");
+    inOrderTraversal(root);
+    printf("\n");
+
+    struct Interval searchInterval = {14, 16};
+    printf("Searching for overlaps with [%d, %d]\n", searchInterval.low, searchInterval.high);
+    searchOverlap(root, &searchInterval);
+
+    // Free memory
+    freeIntervalTree(root);
+
+    return 0;
+}

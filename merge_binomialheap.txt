@@ -1,0 +1,111 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Structure to represent a node in a binomial heap
+struct BinomialNode {
+    int key;
+    int degree;
+    struct BinomialNode* parent;
+    struct BinomialNode* child;
+    struct BinomialNode* sibling;
+};
+
+// Function to create a new binomial node
+struct BinomialNode* createNode(int key) {
+    struct BinomialNode* newNode = (struct BinomialNode*)malloc(sizeof(struct BinomialNode));
+    if (newNode != NULL) {
+        newNode->key = key;
+        newNode->degree = 0;
+        newNode->parent = NULL;
+        newNode->child = NULL;
+        newNode->sibling = NULL;
+    }
+    return newNode;
+}
+
+// Function to merge two binomial heaps
+struct BinomialNode* mergeBinomialHeaps(struct BinomialNode* heap1, struct BinomialNode* heap2) {
+    struct BinomialNode* resultHeap = NULL;
+    struct BinomialNode* carry = NULL;
+    struct BinomialNode* prev = NULL;
+    struct BinomialNode* current1 = heap1;
+    struct BinomialNode* current2 = heap2;
+
+    // Merge until one of the heaps becomes empty
+    while (current1 != NULL || current2 != NULL || carry != NULL) {
+        struct BinomialNode* sumNode = createNode(0);
+        if (current1 != NULL) {
+            sumNode->key += current1->key;
+            sumNode->degree++;
+            current1 = current1->sibling;
+        }
+        if (current2 != NULL) {
+            sumNode->key += current2->key;
+            sumNode->degree++;
+            current2 = current2->sibling;
+        }
+        if (carry != NULL) {
+            sumNode->key += carry->key;
+            sumNode->degree++;
+            carry = NULL;
+        }
+
+        // Adjust the heap
+        if (sumNode->key > 1) {
+            carry = sumNode;
+            sumNode = NULL;
+        }
+
+        // Add the result node to the new heap
+        if (prev != NULL) {
+            prev->sibling = sumNode;
+        } else {
+            resultHeap = sumNode;
+        }
+
+        prev = sumNode;
+    }
+
+    return resultHeap;
+}
+
+// Function to display the binomial heap
+void displayBinomialHeap(struct BinomialNode* root) {
+    while (root != NULL) {
+        printf("B%d ", root->degree);
+        displayBinomialHeap(root->child);
+        root = root->sibling;
+    }
+}
+
+// Example usage
+int main() {
+    struct BinomialNode* heap1 = NULL;
+    struct BinomialNode* heap2 = NULL;
+
+    // Insert nodes into heap1
+    heap1 = mergeBinomialHeaps(heap1, createNode(1));
+    heap1 = mergeBinomialHeaps(heap1, createNode(5));
+    heap1 = mergeBinomialHeaps(heap1, createNode(9));
+
+    // Insert nodes into heap2
+    heap2 = mergeBinomialHeaps(heap2, createNode(3));
+    heap2 = mergeBinomialHeaps(heap2, createNode(7));
+    heap2 = mergeBinomialHeaps(heap2, createNode(11));
+
+    printf("Heap 1: ");
+    displayBinomialHeap(heap1);
+    printf("\n");
+
+    printf("Heap 2: ");
+    displayBinomialHeap(heap2);
+    printf("\n");
+
+    struct BinomialNode* mergedHeap = mergeBinomialHeaps(heap1, heap2);
+
+    printf("Merged Heap: ");
+    displayBinomialHeap(mergedHeap);
+    printf("\n");
+
+    return 0;
+}

@@ -1,0 +1,52 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int *elements;
+    int capacity = 1, size = 0, n, i;
+
+    // Get the number of elements from the user
+    printf("Enter the number of elements (n): ");
+    scanf("%d", &n);
+
+    // Allocate memory for the elements array
+    elements = (int *)malloc(capacity * sizeof(int));
+
+    if (elements == NULL) {
+        printf("Memory allocation failed. Exiting the program.\n");
+        return 1; // Exit with an error code
+    }
+
+    // Read and display the elements
+    printf("Elemnets:\n");
+    for (i = 0; i < n; i++) {
+        int element;
+        scanf("%d", &element);
+
+        // Check if resizing is needed
+        if (size == capacity) {
+            capacity *= 2;
+            elements = (int *)realloc(elements, capacity * sizeof(int));
+
+            if (elements == NULL) {
+                printf("Memory reallocation failed. Exiting the program.\n");
+                return 1; // Exit with an error code
+            }
+        }
+
+        // Add the element to the array
+        elements[size++] = element;
+
+        // Display the current status
+        printf("capacity = %d; size = %d; elements = ", capacity, size);
+        for (int j = 0; j < size; j++) {
+            printf("%d ", elements[j]);
+        }
+        printf("\n");
+    }
+
+    // Free the allocated memory
+    free(elements);
+
+    return 0; // Exit successfully
+}

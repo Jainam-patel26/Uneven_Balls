@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define FILTER_SIZE 100
+#define HASH_FUNCTIONS 3
+
+// Bloom Filter structure
+struct BloomFilter {
+    unsigned char* filter;
+};
+
+// Initialize a Bloom Filter
+struct BloomFilter* initializeBloomFilter() {
+    struct BloomFilter* bloomFilter = (struct BloomFilter*)malloc(sizeof(struct BloomFilter));
+    bloomFilter->filter = (unsigned char*)calloc(FILTER_SIZE, sizeof(unsigned char));
+    return bloomFilter;
+}
+
+// Hash functions
+unsigned int hash1(const char* str) {
+    unsigned int hash = 0;
+    while (*str) {
+        hash = (hash * 31) + *str++;
+    }
+    return hash % FILTER_SIZE;
+}
+
+unsigned int hash2(const char* str) {
+    unsigned int hash = 0;
+    while (*str) {
+        hash = (hash * 37) + *str++;
+    }
+    return hash % FILTER_SIZE;
+}
+
+unsigned int hash3(const char* str) {
+    unsigned int hash = 0;
+    while (*str) {
+        hash = (hash * 41) + *str++;
+    }
+    return hash % FILTER_SIZE;
+}
+
+// Insert an element into the Bloom Filter
+void insertElement(struct BloomFilter* bloomFilter, const char* element) {
+    unsigned int index1 = hash1(element);
+    unsigned int index2 = hash2(element);
+    unsigned int index3 = hash3(element);
+
+    bloomFilter->filter[index1] = 1;
+    bloomFilter->filter[index2] = 1;
+    bloomFilter->filter[index3] = 1;
+}
+
+// Check if an element is likely in the set
+bool isElementInSet(struct BloomFilter* bloomFilter, const char* element) {
+    unsigned int index1 = hash1(element);
+    unsigned int index2 = hash2(element);
+    unsigned int index3 = hash3(element);
+
+    return (bloomFilter->filter[index1] && bloomFilter->filter[index2] && bloomFilter->filter[index3]);
+}
+
+// Free memory used by the Bloom Filter
+void freeBloomFilter(struct BloomFilter* bloomFilter) {
+    free(bloomFilter->filter);
+    free(bloomFilter);
+}
+
+int main() {
+    struct BloomFilter* bloomFilter = initializeBloomFilter();
+
+    // Insert elements into the Bloom Filter
+    insertElement(bloomFilter, "apple");
+    insertElement(bloomFilter, "banana");
+    insertElement(bloomFilter, "orange");
+
+    // Check if elements are likely in the set
+    printf("Is 'apple' likely in the set? %s\n", isElementInSet(bloomFilter, "apple") ? "Yes" : "No");
+    printf("Is 'grape' likely in the set? %s\n", isElementInSet(bloomFilter, "grape") ? "Yes" : "No");
+
+    // Free memory
+    freeBloomFilter(bloomFilter);
+
+    return 0;
+}
